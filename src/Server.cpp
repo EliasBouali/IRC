@@ -92,13 +92,13 @@ void Server::handleClientData(int client_fd)
 
   if (bytes_read <= 0)
   {
-    std::cout << "Clien " << client_fd << " disconnected" << std::endl;
-    close(client_fd);
+    std::cout << "Client " << client_fd << " disconnected" << std::endl;
+    disconnectClient(client_fd);
   }
   else
   {
     buffer[bytes_read] = '\0';
-    std::cout << "Clien " << client_fd << " sent: " << buffer;
+    std::cout << "Client " << client_fd << " sent: " << buffer;
   }
 }
 
@@ -130,4 +130,27 @@ void Server::run()
       }
     }
   }
+}
+
+void Server::disconnectClient(int client_fd)
+{
+  for (size_t i = 0; i < _pollfds.size(); i++)
+  {
+    if (_pollfds[i].fd == client_fd)
+    {
+      _pollfds.erase(_pollfds.begin() + i);
+      break;
+    }
+  }
+
+  for (size_t i = 0; i < _clients.size(); i++)
+  {
+    if (_clients[i]->getFd() == client_fd)
+    {
+      delete _clients[i];
+      _clients.erase(_clients.begin() + i);
+      break;
+    }
+  }
+  close(client_fd);
 }

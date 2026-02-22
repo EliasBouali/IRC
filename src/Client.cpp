@@ -7,3 +7,8 @@ Client::Client(int fd)
 }
 
 Client::~Client(){}
+
+int Client::getFd() const
+{
+  return _fd;
+}

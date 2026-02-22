@@ -9,6 +9,8 @@ class Client
     Client(int fd);
     ~Client();
 
+    int getFd() const;
+
   private:
     Client(const Client &name);
     Client &operator=(const Client &other);
@@ -19,5 +21,4 @@ class Client
     bool _authenticated;
 
 };
-
 #endif

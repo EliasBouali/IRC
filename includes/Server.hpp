@@ -20,6 +20,7 @@ class Server
     void acceptClient();
     void run();
     void handleClientData(int client_fd);
+    void disconnectClient(int client_fd);
 
   private:
     Server(const Server &src);
