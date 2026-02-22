@@ -7,6 +7,9 @@
 #include <cerrno>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <signal.h>
+
+bool Server::_running = true;
 
 Server::Server(int port, const std::string &password)
 : _serverFd(-1), _port(port), _password(password)
@@ -102,36 +105,6 @@ void Server::handleClientData(int client_fd)
   }
 }
 
-void Server::run()
-{
-  struct pollfd server_pfd;
-  server_pfd.fd = _serverFd;
-  server_pfd.events = POLLIN;
-  server_pfd.revents = 0;
-  _pollfds.push_back(server_pfd);
-
-  while (true)
-  {
-    int poll_count = poll(&_pollfds[0], _pollfds.size(), -1);
-    if (poll_count < 0)
-    {
-      std::cerr << "Error: poll() failed" << std::endl;
-      break;
-    }
-
-    for (size_t i = 0; i < _pollfds.size(); i++)
-    {
-      if (_pollfds[i].revents & POLLIN)
-      {
-        if (_pollfds[i].fd == _serverFd)
-          acceptClient();
-        else
-          handleClientData(_pollfds[i].fd);
-      }
-    }
-  }
-}
-
 void Server::disconnectClient(int client_fd)
 {
   for (size_t i = 0; i < _pollfds.size(); i++)
@@ -153,4 +126,50 @@ void Server::disconnectClient(int client_fd)
     }
   }
   close(client_fd);
+}
+
+void Server::signalHandler(int signal)
+{
+  (void)signal;
+  std::cout << "\nShutting down server..." << std::endl;
+  _running = false;
+}
+
+void Server::run()
+{
+  struct pollfd server_pfd;
+  server_pfd.fd = _serverFd;
+  server_pfd.events = POLLIN;
+  server_pfd.revents = 0;
+  _pollfds.push_back(server_pfd);
+
+  while (_running)
+  {
+    int poll_count = poll(&_pollfds[0], _pollfds.size(), -1);
+    if (poll_count < 0)
+    {
+      if (errno == EINTR)
+        break;
+      std::cerr << "Error: poll() failed" << std::endl;
+      break;
+    }
+
+    for (size_t i = 0; i < _pollfds.size(); i++)
+    {
+      if (_pollfds[i].revents & POLLIN)
+      {
+        if (_pollfds[i].fd == _serverFd)
+          acceptClient();
+        else
+          handleClientData(_pollfds[i].fd);
+      }
+    }
+  }
+
+  std::cout << "Cleaning up..." << std::endl;
+  for (size_t i = 0; i < _clients.size(); i++)
+  {
+    delete _clients[i];
+  }
+  close(_serverFd);
 }

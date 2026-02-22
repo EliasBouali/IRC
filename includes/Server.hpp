@@ -21,10 +21,13 @@ class Server
     void run();
     void handleClientData(int client_fd);
     void disconnectClient(int client_fd);
+    static void signalHandler(int signal);
 
   private:
     Server(const Server &src);
     Server &operator=(const Server &src);
+
+    static bool _running;
 
     int _serverFd;
     int _port;
