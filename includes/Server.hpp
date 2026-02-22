@@ -17,6 +17,9 @@ class Server
     ~Server();
 
     void init();
+    void acceptClient();
+    void run();
+    void handleClientData(int client_fd);
 
   private:
     Server(const Server &src);
@@ -25,8 +28,9 @@ class Server
     int _serverFd;
     int _port;
     std::string _password;
-    std::vector<Client> _clients;
+    std::vector<Client*> _clients;
     std::map<std::string, Channel> _channels;
+    std::vector<struct pollfd> _pollfds;
 
 };
 

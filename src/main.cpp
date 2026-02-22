@@ -9,13 +9,9 @@ int main()
 
     std::cout << "Initializing server on port 6667..." << std::endl;
     srv.init();
+    std::cout << "Server is running. Press Ctrl+C to stop." << std::endl;
 
-    std::cout << "Server is listening. Press Ctrl+C to stop." << std::endl;
-
-    // Boucle infinie pour garder le serveur actif
-    while (true) {
-        // Pour l'instant on fait rien, juste on reste actif
-    }
+    srv.run();  // ← boucle infinie avec poll()
 
     return 0;
 }
