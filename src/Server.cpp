@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Message.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -88,6 +89,17 @@ void Server::acceptClient()
 }
 
 
+void Server::processMessage(const std::string &raw_message)
+{
+    Message msg(raw_message);
+    std::cout << "Command: [" << msg.getCommand() << "]" << std::endl;
+    std::cout << "Params: ";
+    std::vector<std::string> params = msg.getParams();
+    for (size_t i = 0; i < params.size(); i++)
+        std::cout << "[" << params[i] << "] ";
+    std::cout << std::endl;
+}
+
 void Server::handleClientData(int client_fd)
 {
   char buffer[1024];
@@ -97,12 +109,38 @@ void Server::handleClientData(int client_fd)
   {
     std::cout << "Client " << client_fd << " disconnected" << std::endl;
     disconnectClient(client_fd);
+    return ;
   }
-  else
+
+  Client* client = findClientByFd(client_fd);
+  if (!client)
+    return;
+
+  client->getBuffer().append(buffer, bytes_read);
+  std::string &buf = client->getBuffer();
+  size_t pos;
+
+  while (true)
   {
-    buffer[bytes_read] = '\0';
-    std::cout << "Client " << client_fd << " sent: " << buffer;
+    pos = buf.find("\r\n");
+    if (pos != std::string::npos)
+    {
+      processMessage(buf.substr(0, pos));
+      buf.erase(0, pos + 2);
+      continue;
+    }
+
+    pos = buf.find("\n");
+    if (pos != std::string::npos)
+    {
+      processMessage(buf.substr(0, pos));
+      buf.erase(0, pos + 1);
+      continue;
+    }
+    break;
   }
+
+
 }
 
 void Server::disconnectClient(int client_fd)
@@ -133,6 +171,16 @@ void Server::signalHandler(int signal)
   (void)signal;
   std::cout << "\nShutting down server..." << std::endl;
   _running = false;
+}
+
+Client* Server::findClientByFd(int fd)
+{
+  for (size_t i = 0; i < _clients.size(); i++)
+  {
+    if (_clients[i]->getFd() == fd)
+      return _clients[i];
+  }
+  return NULL;
 }
 
 void Server::run()

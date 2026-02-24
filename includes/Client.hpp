@@ -10,6 +10,7 @@ class Client
     ~Client();
 
     int getFd() const;
+    std::string &getBuffer();
 
   private:
     Client(const Client &name);
@@ -19,6 +20,7 @@ class Client
     std::string _nickname;
     std::string _username;
     bool _authenticated;
+    std::string _buffer;
 
 };
 #endif

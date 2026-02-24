@@ -28,6 +28,8 @@ class Server
     Server &operator=(const Server &src);
 
     static bool _running;
+    Client* findClientByFd(int fd);
+    void processMessage(const std::string &raw_message);
 
     int _serverFd;
     int _port;
